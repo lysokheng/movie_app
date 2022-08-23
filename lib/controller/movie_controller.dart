@@ -2,10 +2,11 @@ import 'package:get/get.dart';
 import 'package:getx_state_management/models/movie_res_model.dart';
 import 'package:getx_state_management/services/api_service.dart';
 
-class MovieController extends GetxController {
+class MovieController extends GetxController with StateMixin<MovieResModel> {
   APIService service = APIService();
-  MovieResModel? movieResModel;
-  bool isLoading = false;
+
+  MovieController(this.service);
+
   @override
   void onInit() {
     fetchMovie();
@@ -13,14 +14,17 @@ class MovieController extends GetxController {
   }
 
   Future<void> fetchMovie() async {
-    isLoading = true;
+    change(null, status: RxStatus.loading());
+
     final res = await service.getLastMovie();
     if (res != null) {
-      movieResModel = res;
-      update();
+      if (res.results!.isNotEmpty) {
+        change(res, status: RxStatus.success());
+      } else {
+        change(null, status: RxStatus.empty());
+      }
     } else {
-      movieResModel = res;
+      change(null, status: RxStatus.error('failed to get data'));
     }
-    isLoading = false;
   }
 }
